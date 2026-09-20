@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-from src.profiler import profile_dataset , metric_dataset
+from src.profiler import *
 
 
 st.set_page_config(
@@ -47,3 +47,16 @@ if uploaded_file:
 
     for metric in metrics:
         st.write(metric_dataset(df,metric))
+
+    categorical_columns = profile["categorical_columns"]
+
+    colonne_choisie = st.selectbox(
+        "Choose a column to visualise :",
+        categorical_columns
+    )
+
+    if colonne_choisie:
+        fig = categorical_viz(df,colonne_choisie)
+        st.pyplot(fig)
+    
+    
