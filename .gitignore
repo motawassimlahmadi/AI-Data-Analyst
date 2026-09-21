@@ -1,4 +1,6 @@
 .DS_STORE
 app.py
-src/__pycache__/profiler.cpython-314.pyc
-.gitignore
+.venv/
+.env
+*.pyc
+__pycache__/

@@ -4,6 +4,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def profile_dataset(df: pd.DataFrame) -> dict:
+
+    """
+
+    df : The dataframe
+
+    Analysis of the dataset profile : Rows, columns , columns names , dtypes , missing values , duplicates , numeric columns , categorical columns
+
+    Returns a dict of the global profile
+    
+    """
     profile = {
         "rows": df.shape[0],
         "columns": df.shape[1],
@@ -21,21 +31,39 @@ def profile_dataset(df: pd.DataFrame) -> dict:
 
     return profile
 
-def metric_dataset(df : pd.DataFrame , metric : str) -> dict:
-    numerical_columns = list(df.select_dtypes(include="number").columns)
+def metric_dataset(df : pd.DataFrame,col) -> dict:
+
+    """
+    df : The dataframe 
+    col : The column we want to calculate its metrics
+
+    Calculates differents metrics like mean , max etc for the column in the df 
+
+    Returns a dict of the different metrics for the column
+    
+    """
     metrics = ["mean","median","max","min","std"]
 
-    metric = metric.rstrip().lower()
 
-    metric_dict = {"Metric" : metric}
+    metric_dict = {"Column":col}
+    for metric in metrics:
+        metric_dict[f"{metric}"] = df[col].agg(metric)
 
-    for col in numerical_columns:
-        if metric in metrics:
-            metric_dict[col] = float(df[col].agg(metric))
-        
     return metric_dict
 
+
+
 def categorical_viz(df: pd.DataFrame, col: str):
+
+    """
+    df : The Dataframe 
+    col : Column we want to vizualize
+
+    Returns the vizualation of the categorical column 
+    
+    """
+
+
     fig, ax = plt.subplots(figsize=(6,6))
 
     
@@ -54,6 +82,16 @@ def categorical_viz(df: pd.DataFrame, col: str):
     return fig
 
 def numerical_viz(df: pd.DataFrame, x_col: str, y_col: str):
+
+    """
+        df : The Dataframe 
+        col : Column we want to vizualize
+    
+        Returns the vizualation of the numerical column 
+        
+    """
+
+
     fig, ax = plt.subplots(figsize=(6,6))
 
     
@@ -72,6 +110,11 @@ def numerical_viz(df: pd.DataFrame, x_col: str, y_col: str):
 
 
 def corr_matrix(df: pd.DataFrame , numerical_columns: list[str]):
+
+    """
+    Returns the correlation matrix of the dataframe
+    
+    """
     df_corr = df.filter(items=numerical_columns)
     matrix = df_corr.corr()
 
@@ -84,6 +127,14 @@ def corr_matrix(df: pd.DataFrame , numerical_columns: list[str]):
 
 
 def high_cardinality(df: pd.DataFrame):
+
+    """
+    
+    Checks if there are useless high cardinality repitition columns likes IDs , index that can be dropped for analysis
+    
+    """
+
+
     risk_of_HC = df.shape[0] * 0.75
 
     columns = df.columns
@@ -96,6 +147,13 @@ def high_cardinality(df: pd.DataFrame):
     return cols_HC
 
 def useless_cols(df: pd.DataFrame):
+
+    """
+    
+    Columns that have the same value are useless
+    
+    
+    """
     useless_cols = []
     for col in df.columns:
         if len(df[col].unique()) == 1:

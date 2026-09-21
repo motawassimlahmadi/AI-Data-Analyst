@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 
 from src.profiler import *
+from src.agent import ask_agent
+
 
 
 st.set_page_config(
@@ -22,10 +24,13 @@ if uploaded_file:
 
     st.subheader("Dataset Preview")
     st.dataframe(df.head())
+    st.subheader("Dataset Description")
+    st.dataframe(df.describe())
 
     profile = profile_dataset(df)
     risk_of_HC = high_cardinality(df) # Detect columns that are lilkely to be ID's that are not useful for predictions.
     useless_col = useless_cols(df)
+    numerical_columns = profile["numeric_columns"]
 
     st.subheader("Dataset Overview")
 
@@ -43,6 +48,17 @@ if uploaded_file:
     if useless_col:
         col5.caption(f"Columns : {', '.join(useless_col)}")
 
+    question = st.text_input("Enter your question here :")
+
+    if st.button("Send your question"):
+        if question:
+            result = ask_agent(df,question)
+
+            st.info(result)
+            print(result)
+        else:
+            st.warning("Please write a question first !")
+
     st.subheader("Column Information")
 
     st.write(profile["dtypes"])
@@ -53,10 +69,11 @@ if uploaded_file:
 
     st.subheader("Metrics")
 
-    metrics = ["mean","median","max","min","std"]
 
-    for metric in metrics:
-        st.write(metric_dataset(df,metric))
+    for col in numerical_columns:
+        st.write(metric_dataset(df , col))
+
+    
 
     categorical_columns = profile["categorical_columns"]
 
@@ -69,9 +86,9 @@ if uploaded_file:
 
     if colonne_choisie:
         fig = categorical_viz(df,colonne_choisie)
-        st.pyplot(fig , use_container_width=False)
+        st.pyplot(fig , width="content")
 
-    numerical_columns = profile["numeric_columns"]
+    
 
     st.subheader("Numerical Vizualization")
 
@@ -84,12 +101,12 @@ if uploaded_file:
 
     if x_choix and y_choix:
         fig = numerical_viz(df,x_choix,y_choix)
-        st.pyplot(fig , use_container_width=False)
+        st.pyplot(fig , width="content")
 
     st.subheader("Correlation HeatMap")
 
     fig = corr_matrix(df,numerical_columns)
-    st.pyplot(fig , use_container_width=False)
+    st.pyplot(fig , width="content")
 
 
     
