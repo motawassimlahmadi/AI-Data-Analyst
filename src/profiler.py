@@ -1,6 +1,7 @@
 import pandas as pd 
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 def profile_dataset(df: pd.DataFrame) -> dict:
     profile = {
@@ -45,8 +46,43 @@ def categorical_viz(df: pd.DataFrame, col: str):
 
     ax.bar(X_cat, Y_cat)
     ax.set_title(col)
+    ax.grid(True)
     ax.set_xlabel(col)
     ax.set_ylabel("Count")
     ax.grid(axis='y') 
     
     return fig
+
+def numerical_viz(df: pd.DataFrame, x_col: str, y_col: str):
+    fig, ax = plt.subplots(figsize=(6,6))
+
+    
+    X_val = df[x_col]
+    Y_val = df[y_col]
+
+    ax.scatter(X_val,Y_val)
+    ax.set_title(f"{x_col} vs {y_col}")
+    ax.grid(True)
+    ax.set_xlabel(x_col)
+    ax.set_ylabel(y_col)
+
+    
+    return fig
+
+
+
+def corr_matrix(df: pd.DataFrame , numerical_columns: list[str]):
+    df_corr = df.filter(items=numerical_columns)
+    matrix = df_corr.corr()
+
+    fig, ax = plt.subplots(figsize=(8,6))
+
+    sns.heatmap(matrix,annot=True, cmap="coolwarm",fmt=".2f" , linewidths=0.5)
+    ax.set_title("Correlation HeatMap")
+
+    return fig
+
+
+
+
+
