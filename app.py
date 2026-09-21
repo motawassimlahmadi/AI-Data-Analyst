@@ -24,14 +24,24 @@ if uploaded_file:
     st.dataframe(df.head())
 
     profile = profile_dataset(df)
+    risk_of_HC = high_cardinality(df) # Detect columns that are lilkely to be ID's that are not useful for predictions.
+    useless_col = useless_cols(df)
 
     st.subheader("Dataset Overview")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 , col4 , col5 = st.columns(5)
 
     col1.metric("Rows", profile["rows"])
     col2.metric("Columns", profile["columns"])
     col3.metric("Duplicates", profile["duplicates"])
+    col4.metric("Risk of High Cardinality", len(risk_of_HC))
+    col5.metric("Useless Columns", len(useless_col))
+
+    if risk_of_HC:
+        col4.caption(f"Columns : {', '.join(risk_of_HC)}")
+
+    if useless_col:
+        col5.caption(f"Columns : {', '.join(useless_col)}")
 
     st.subheader("Column Information")
 

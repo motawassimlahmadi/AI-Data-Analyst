@@ -83,6 +83,27 @@ def corr_matrix(df: pd.DataFrame , numerical_columns: list[str]):
     return fig
 
 
+def high_cardinality(df: pd.DataFrame):
+    risk_of_HC = df.shape[0] * 0.75
+
+    columns = df.columns
+    cols_HC = []
+
+    for col in columns:
+        if df[col].nunique() >= risk_of_HC:
+            cols_HC.append(col)
+
+    return cols_HC
+
+def useless_cols(df: pd.DataFrame):
+    useless_cols = []
+    for col in df.columns:
+        if len(df[col].unique()) == 1:
+            useless_cols.append(col)
+
+    return useless_cols
+
+
 
 
 
