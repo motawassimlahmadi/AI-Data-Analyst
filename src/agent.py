@@ -153,14 +153,17 @@ def ask_agent(df: pd.DataFrame, question: str):
 
     response = chat.send_message(question)
 
-    if response.function_calls:
+    while response.function_calls:
         reponses_outils = []
         
         for tool_call in response.function_calls:
             
             if tool_call.name == "profile_dataset":
-                print("1")
                 resultat_outil = profile_dataset(df)
+                if resultat_outil:
+                    print("1")
+                    print(resultat_outil)
+                
 
             elif tool_call.name == "metric_dataset":
                 print("2")
@@ -170,13 +173,29 @@ def ask_agent(df: pd.DataFrame, question: str):
             elif tool_call.name == "categorical_viz":
                 print("3")
                 col_name = tool_call.args["col"]
-                resultat_outil = categorical_viz(df, col_name)
+                fig = categorical_viz(df, col_name)
+                st.pyplot(fig,width="content")
+                resultat_outil = {
+                        "status": "success",
+                        "message": (
+                            "The graphic was generated "
+                            "and displayed successfully."
+                    )
+                }
 
             elif tool_call.name == "numerical_viz":
                 print("4")
                 x_col = tool_call.args["x_col"]
                 y_col = tool_call.args["y_col"]
-                resultat_outil = numerical_viz(df, x_col, y_col)
+                fig = numerical_viz(df, x_col, y_col)
+                st.pyplot(fig,width="content")
+                resultat_outil = {
+                                    "status": "success",
+                                    "message": (
+                                        "The graphic was generated "
+                                        "and displayed successfully."
+                    )
+                }
 
             elif tool_call.name == "corr_matrix":
                 print("5")
