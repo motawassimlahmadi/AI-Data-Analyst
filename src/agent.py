@@ -21,29 +21,40 @@ def ask_agent(df: pd.DataFrame, question: str):
                 ),
                 types.FunctionDeclaration(
                     name="metric_dataset",
-                    description="Analyze the metrics of a specific column.",
+                    description=(
+                            "Analyze a specific numeric column of the dataset. "
+                            "Use this tool whenever the user asks for the average, mean, "
+                            "median, minimum, maximum, standard deviation, or general "
+                            "statistics of a specific column. "
+                            "The column argument must be the exact column name from the dataset."
+                        ),
                     parameters=types.Schema(
                         type=types.Type.OBJECT,
                         properties={
-                            "column": types.Schema(
+                            "col": types.Schema(
                                 type=types.Type.STRING,
                                 description="Name of the column"
                             )
                         },
-                        required=["column"]
+                        required=["col"]
                     )
                 )
             ]
         )
     ]
 
+    columns = list(df.columns)
+
     chat = client.chats.create(
-        model="gemini-3.8-flash",
+        model="gemini-3.5-flash-lite",
         config=types.GenerateContentConfig(
             system_instruction=(
                 "You are an AI Data Analyst. "
                 "Use the available tools to analyze the dataset. "
-                "Never invent numerical results."
+                "Never invent numerical results. "
+                f"The available columns are: {columns}. "
+                "Whenever the user asks for statistics about a specific numeric "
+                "column, you MUST use metric_dataset."
             ),
             tools=mes_outils,
             temperature=0.0
@@ -53,27 +64,32 @@ def ask_agent(df: pd.DataFrame, question: str):
     response = chat.send_message(question)
 
     if response.function_calls:
+        reponses_outils = []
+        
         for tool_call in response.function_calls:
             
             if tool_call.name == "profile_dataset":
-                print("PROFILE")
+                print("Appel : PROFILE")
                 resultat_outil = profile_dataset(df)
                 
             elif tool_call.name == "metric_dataset":
-                print("METRIC")
-                col_name = tool_call.args["column"]
-                resultat_outil = metric_dataset(df,col_name)
+                col_name = tool_call.args["col"]
+                print(f"Appel : METRIC pour '{col_name}'")
+                resultat_outil = metric_dataset(df, col_name)
 
-            if isinstance(resultat_outil,(pd.DataFrame , pd.Series)):
-                resultat_outil = resultat_outil.to_json()
+            # Formatage
+            if isinstance(resultat_outil, (pd.DataFrame, pd.Series)):
+                resultat_clean = resultat_outil.to_json()
             else:
-                resultat_outil = str(resultat_outil)
+                resultat_clean = str(resultat_outil)
 
-            response = chat.send_message(
+            reponses_outils.append(
                 types.Part.from_function_response(
                     name=tool_call.name,
-                    response={"result": resultat_outil}
+                    response={"result": resultat_clean}
                 )
             )
+            
+        response = chat.send_message(reponses_outils)
             
     return response.text
