@@ -52,6 +52,10 @@ def metric_dataset(df : pd.DataFrame,col) -> dict:
     return metric_dict
 
 
+def categorical_count(df:pd.DataFrame,categorical_column:str):
+    return df.groupby(categorical_column)[categorical_column].value_counts()
+
+
 
 def categorical_viz(df: pd.DataFrame, col: str):
 
@@ -160,6 +164,45 @@ def useless_cols(df: pd.DataFrame):
             useless_cols.append(col)
 
     return useless_cols
+
+
+def outlier_check(df : pd.DataFrame):
+    different_vals = {}
+    for col in df.columns:
+        different_vals[col] = df[col].unique()
+
+    return different_vals
+
+def IQR(df: pd.DataFrame , numerical_column : str):
+    Q1 = np.percentile(df[numerical_column],25,method="midpoint")
+    Q2 = np.percentile(df[numerical_column],50,method="midpoint")
+    Q3 = np.percentile(df[numerical_column],75,method="midpoint")
+
+    IQR = Q3 - Q1
+
+    low_lim = Q1 - 1.5*IQR
+    up_lim = Q3+1.5*IQR
+
+    outliers = []
+    for elem in df[numerical_column]:
+        if (elem >up_lim) or (elem<low_lim):
+            outliers.append(elem)
+    
+    return {
+        "column": numerical_column,
+        "Q1": float(Q1),
+        "median": float(Q2),
+        "Q3": float(Q3),
+        "IQR": float(IQR),
+        "lower_bound": float(low_lim),
+        "upper_bound": float(up_lim),
+        "number_of_outliers": int(len(outliers)),
+        "outlier_values": outliers
+    }
+
+
+
+
 
 
 

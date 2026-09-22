@@ -28,22 +28,38 @@ def ask_agent(df: pd.DataFrame, question: str):
                 types.FunctionDeclaration(
                     name="metric_dataset",
                     description=(
-                            "Analyze a specific numeric column of the dataset. "
-                            "Use this tool whenever the user asks for the average, mean, "
+                            "Use to analyse a numeric column from the dataset"
+                            "Only Use this tool whenever the user asks for the average, mean, "
                             "median, minimum, maximum, standard deviation, or general "
                             "statistics of a specific column. "
-                            "The column argument must be the exact column name from the dataset."
+                            "The column argument must be the exact numeric column name from the dataset."
+                            "Note that this function can alos be used to check possible outliers"
                         ),
                     parameters=types.Schema(
                         type=types.Type.OBJECT,
                         properties={
                             "col": types.Schema(
                                 type=types.Type.STRING,
-                                description="Name of the column"
+                                description="Name of the numeric column"
                             )
                         },
                         required=["col"]
                     )
+                ),
+                types.FunctionDeclaration(
+                    name="categorical_count",
+                    description="Use this tool to calculate the count of a categorical column",
+                    parameters=types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            "categorical_column": types.Schema(
+                                type=types.Type.STRING,
+                                description="Name of the categorical column"
+                            )
+                        },
+                        required=["categorical_column"]
+                    )
+
                 ),
                 types.FunctionDeclaration(
                     name="categorical_viz",
@@ -127,6 +143,35 @@ def ask_agent(df: pd.DataFrame, question: str):
                         "Detect columns containing only one unique value. "
                         "Use this tool to identify constant columns that provide "
                         "no useful information for analysis or machine learning."
+                    )
+                ),
+                types.FunctionDeclaration(
+                        name="outlier_check",
+                        description=(
+                            "Use this tool to inspect the outliers in the dataset "
+                        )
+                    ),
+                types.FunctionDeclaration(
+                    name="IQR",
+                    description=(
+                        "Use this tool to inspect outliers in a numerical column using the "
+                        "Interquartile Range (IQR) method. The method identifies values "
+                        "below Q1 - 1.5*IQR or above Q3 + 1.5*IQR. "
+                        "Use this tool when the user asks to detect or identify "
+                        "outliers in a specific numerical column."
+                    ),
+                    parameters=types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            "numerical_column": types.Schema(
+                                type=types.Type.STRING,
+                                description=(
+                                    "Exact name of the numerical column "
+                                    "to analyze for outliers."
+                                )
+                            )
+                        },
+                        required=["numerical_column"]
                     )
                 )
             ]
@@ -218,6 +263,21 @@ def ask_agent(df: pd.DataFrame, question: str):
             elif tool_call.name == "useless_cols":
                 print("7")
                 resultat_outil = useless_cols(df)
+            elif tool_call.name == "outlier_check":
+                print("OC")
+                resultat_outil = outlier_check(df)
+            elif tool_call.name == "IQR":
+                print("IQR")
+                numerical_column = tool_call.args["numerical_column"]
+
+                resultat_outil = IQR(
+                    df,
+                    numerical_column
+                )
+            elif tool_call.name == "categorical_count":
+                print("YES")
+                categorical_column = tool_call.args["categorical_column"]
+                resultat_outil = categorical_count(df,categorical_column)
 
             # Formatage
             if isinstance(resultat_outil, (pd.DataFrame, pd.Series)):

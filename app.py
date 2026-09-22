@@ -67,47 +67,6 @@ if uploaded_file:
 
     st.write(profile["missing_values"])
 
-    st.subheader("Metrics")
-
-
-    for col in numerical_columns:
-        st.write(metric_dataset(df , col))
-
-    
-
-    categorical_columns = profile["categorical_columns"]
-
-    st.subheader("Categorical Vizualization")
-
-    colonne_choisie = st.selectbox(
-        "Choose a column to visualise :",
-        categorical_columns
-    )
-
-    if colonne_choisie:
-        fig = categorical_viz(df,colonne_choisie)
-        st.pyplot(fig , width="content")
-
-    
-
-    st.subheader("Numerical Vizualization")
-
-    col_num1 , col_num2 = st.columns(2)
-
-    with col_num1:
-        x_choix = st.selectbox("Choose the x-coordinate" , numerical_columns)
-    with col_num2:
-        y_choix = st.selectbox("Choose the y-coordinate", numerical_columns)
-
-    if x_choix and y_choix:
-        fig = numerical_viz(df,x_choix,y_choix)
-        st.pyplot(fig , width="content")
-
-    st.subheader("Correlation HeatMap")
-
-    fig = corr_matrix(df,numerical_columns)
-    st.pyplot(fig , width="content")
-
 
     
     
