@@ -294,5 +294,32 @@ def top_n_records(df: pd.DataFrame, sort_col: str, n: int = 5, ascending: bool =
         return [{"error": str(e)}]
 
 
+def boxplot_viz(df: pd.DataFrame, categorical_col: str, numerical_col: str):
+    """
+    Creates a boxplot to compare the distribution of a numerical variable 
+    across different categories.
+    """
+    fig, ax = plt.subplots(figsize=(8, 6))
+    sns.boxplot(data=df, x=categorical_col, y=numerical_col, ax=ax, palette="Set2")
+    ax.set_title(f"Distribution of {numerical_col} by {categorical_col}")
+    
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    
+    return fig
+
+def crosstab_analysis(df: pd.DataFrame, col1: str, col2: str) -> dict:
+    """
+    Computes a cross-tabulation of two categorical factors to see their frequency distribution.
+    """
+    try:
+        ct = pd.crosstab(df[col1], df[col2])
+        return {
+            "row_variable": col1,
+            "column_variable": col2,
+            "crosstab_data": ct.to_dict()
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 

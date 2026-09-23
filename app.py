@@ -1,10 +1,16 @@
 import streamlit as st
 import pandas as pd
-
+from dotenv import load_dotenv
 from src.profiler import *
-from src.agent import ask_agent
+from src.agent import *
+from google import genai
+from google.genai import types
+load_dotenv()
 
 
+
+if "client" not in st.session_state:
+    st.session_state.client = genai.Client()
 
 st.set_page_config(
     page_title="AI Data Analyst",
@@ -27,10 +33,14 @@ if uploaded_file:
     st.subheader("Dataset Description")
     st.dataframe(df.describe())
 
+
+
     profile = profile_dataset(df)
     risk_of_HC = high_cardinality(df) # Detect columns that are lilkely to be ID's that are not useful for predictions.
     useless_col = useless_cols(df)
     numerical_columns = profile["numeric_columns"]
+    columns = df.columns
+    mes_outils = my_tools()
 
     st.subheader("Dataset Overview")
 
@@ -48,24 +58,44 @@ if uploaded_file:
     if useless_col:
         col5.caption(f"Columns : {', '.join(useless_col)}")
 
-    question = st.text_input("Enter your question here :")
+    if "chat_session" not in st.session_state:
+        st.session_state.chat_session = st.session_state.client.chats.create(
+            model="gemini-3.6-flash",
+            config=types.GenerateContentConfig(
+                system_instruction=(
+                    "You are an AI Data Analyst. "
+                    "Use the available tools to analyze the dataset. "
+                    "Never invent numerical results. "
+                    f"The available columns are: {columns}. "
+                    "Whenever the user asks for statistics about a specific numeric "
+                    "column, you MUST use metric_dataset."
+                ),
+                tools=mes_outils,
+                temperature=0.0
+            )
+        )
 
-    if st.button("Send your question"):
-        if question:
-            result = ask_agent(df,question)
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-            st.info(result)
-            print(result)
-        else:
-            st.warning("Please write a question first !")
+    
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
-    st.subheader("Column Information")
+    if prompt := st.chat_input("Posez une question sur vos données..."):
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        st.session_state.messages.append({"role": "user", "content": prompt})
 
-    st.write(profile["dtypes"])
+        with st.chat_message("assistant"):
+            with st.spinner("Analyse en cours..."):
+                reponse_ia = ask_agent(st.session_state.chat_session, df, prompt)
+                st.markdown(reponse_ia)
 
-    st.subheader("Missing Values")
+        st.session_state.messages.append({"role": "assistant", "content": reponse_ia})
 
-    st.write(profile["missing_values"])
+    
 
 
     
