@@ -202,8 +202,96 @@ def IQR(df: pd.DataFrame , numerical_column : str):
 
 
 
+def groupby_aggregation(df: pd.DataFrame, groupby_col: str, agg_col: str, agg_func: str = "mean") -> dict:
+    """
+    Groups the dataframe by a categorical column and applies an aggregation function to a numerical column.
+    
+    groupby_col : The categorical column to group by.
+    agg_col : The numerical column to aggregate.
+    agg_func : The aggregation function ('mean', 'sum', 'max', 'min', 'count', 'median').
+    
+    Returns a dictionary of the aggregated results.
+    """
+    try:
+        grouped_data = df.groupby(groupby_col)[agg_col].agg(agg_func).to_dict()
+        return {
+            "groupby_column": groupby_col,
+            "aggregated_column": agg_col,
+            "applied_function": agg_func,
+            "results": grouped_data
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 
+def distribution_viz(df: pd.DataFrame, numerical_column: str):
+    """
+    Creates a histogram with a Kernel Density Estimate (KDE) to visualize 
+    the distribution of a single numerical column.
+    """
+    fig, ax = plt.subplots(figsize=(8, 5))
+    
+    sns.histplot(df[numerical_column].dropna(), kde=True, ax=ax, color='skyblue')
+    ax.set_title(f"Distribution of {numerical_column}")
+    ax.set_xlabel(numerical_column)
+    ax.set_ylabel("Frequency")
+    ax.grid(axis='y', alpha=0.7)
+    
+    return fig
+
+def missing_values_report(df: pd.DataFrame) -> dict:
+    """
+    Calculates the exact percentage of missing values for columns that have at least one missing value.
+    Returns a dictionary mapping column names to their missing value percentage.
+    """
+    missing_counts = df.isna().sum()
+    missing_percentages = (missing_counts / len(df)) * 100
+    
+    missing_filtered = missing_percentages[missing_percentages > 0].round(2)
+    
+    if missing_filtered.empty:
+        return {"message": "No missing values found in the dataset."}
+        
+    return missing_filtered.to_dict()
+
+def time_series_viz(df: pd.DataFrame, date_col: str, numerical_col: str):
+    """
+    Creates a line chart to visualize the evolution of a numerical variable over time.
+    Note: date_col should ideally be converted to datetime before, or be sortable.
+    """
+    # Trier les données par date temporairement pour le graphique
+    df_sorted = df.sort_values(by=date_col)
+    
+    fig, ax = plt.subplots(figsize=(10, 5))
+    
+    ax.plot(df_sorted[date_col], df_sorted[numerical_col], marker='o', linestyle='-', markersize=4)
+    ax.set_title(f"Evolution of {numerical_col} over {date_col}")
+    ax.set_xlabel(date_col)
+    ax.set_ylabel(numerical_col)
+    ax.grid(True)
+    
+    # Rotation des labels X si ce sont des dates longues
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    
+    return fig
+
+
+def top_n_records(df: pd.DataFrame, sort_col: str, n: int = 5, ascending: bool = False) -> list:
+    """
+    Returns the top N rows of the dataset sorted by a specific column.
+    
+    sort_col : The column to sort by.
+    n : Number of rows to return (default 5).
+    ascending : False for highest values (Top), True for lowest values (Bottom).
+    
+    Returns a list of dictionaries (records).
+    """
+    try:
+        top_df = df.sort_values(by=sort_col, ascending=ascending).head(n)
+        return top_df.to_dict(orient="records")
+    except Exception as e:
+        return [{"error": str(e)}]
 
 
 

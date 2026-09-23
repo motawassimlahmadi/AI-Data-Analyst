@@ -152,6 +152,120 @@ def ask_agent(df: pd.DataFrame, question: str):
                         )
                     ),
                 types.FunctionDeclaration(
+                    name="groupby_aggregation",
+                    description=(
+                        "Groups the dataset by a categorical column and applies an aggregation function "
+                        "to a numerical column. Use this tool for questions asking for metrics per category, "
+                        "like 'average salary by department' or 'total sales per city'."
+                    ),
+                    parameters=types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            "groupby_col": types.Schema(
+                                type=types.Type.STRING,
+                                description="The exact name of the categorical column to group by."
+                            ),
+                            "agg_col": types.Schema(
+                                type=types.Type.STRING,
+                                description="The exact name of the numerical column to aggregate."
+                            ),
+                            "agg_func": types.Schema(
+                                type=types.Type.STRING,
+                                description="The aggregation function to apply. Must be one of: 'mean', 'sum', 'max', 'min', 'count', or 'median'."
+                            )
+                        },
+                        required=["groupby_col", "agg_col", "agg_func"]
+                    )
+                ),
+                types.FunctionDeclaration(
+                    name="distribution_viz",
+                    description=(
+                        "Creates a histogram to visualize the distribution of a single numerical column. "
+                        "Use this tool when the user asks to see the distribution, spread, or shape of a numerical variable."
+                    ),
+                    parameters=types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            "numerical_column": types.Schema(
+                                type=types.Type.STRING,
+                                description="Exact name of the numerical column to visualize."
+                            )
+                        },
+                        required=["numerical_column"]
+                    )
+                ),
+                types.FunctionDeclaration(
+                    name="missing_values_report",
+                    description=(
+                        "Calculates the exact percentage of missing values for all columns in the dataset. "
+                        "Use this tool to evaluate data quality or when asked about null/missing values."
+                    )
+                    # Pas de parameters car la fonction ne prend que 'df' en argument
+                ),
+                types.FunctionDeclaration(
+                    name="time_series_viz",
+                    description=(
+                        "Creates a line chart to visualize the evolution of a numerical variable over time. "
+                        "Use this tool when the user asks to plot trends over dates or time."
+                    ),
+                    parameters=types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            "date_col": types.Schema(
+                                type=types.Type.STRING,
+                                description="Exact name of the date or time column for the X-axis."
+                            ),
+                            "numerical_col": types.Schema(
+                                type=types.Type.STRING,
+                                description="Exact name of the numerical column for the Y-axis."
+                            )
+                        },
+                        required=["date_col", "numerical_col"]
+                    )
+                ),
+                types.FunctionDeclaration(
+                    name="top_n_records",
+                    description=(
+                        "Returns the top N rows of the dataset sorted by a specific column. "
+                        "Use this tool for queries asking for the 'top 5 highest' or 'bottom 3 lowest' records."
+                    ),
+                    parameters=types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            "sort_col": types.Schema(
+                                type=types.Type.STRING,
+                                description="The exact name of the column to sort by."
+                            ),
+                            "n": types.Schema(
+                                type=types.Type.INTEGER,
+                                description="The number of records to return (e.g., 5 or 10)."
+                            ),
+                            "ascending": types.Schema(
+                                type=types.Type.BOOLEAN,
+                                description="Set to False for the highest values (Top). Set to True for the lowest values (Bottom)."
+                            )
+                        },
+                        required=["sort_col", "n", "ascending"]
+                    )
+                ),
+                types.FunctionDeclaration(
+                    name="skewness_kurtosis",
+                    description=(
+                        "Calculates the Skewness (asymmetry) and Kurtosis of a numerical distribution. "
+                        "Use this tool to check if a variable follows a normal distribution."
+                    ),
+                    parameters=types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            "numerical_column": types.Schema(
+                                type=types.Type.STRING,
+                                description="Exact name of the numerical column."
+                            )
+                        },
+                        required=["numerical_column"]
+                    )
+                ),
+                types.FunctionDeclaration(
                     name="IQR",
                     description=(
                         "Use this tool to inspect outliers in a numerical column using the "
@@ -172,7 +286,8 @@ def ask_agent(df: pd.DataFrame, question: str):
                             )
                         },
                         required=["numerical_column"]
-                    )
+                    ),
+                
                 )
             ]
         )
@@ -278,6 +393,47 @@ def ask_agent(df: pd.DataFrame, question: str):
                 print("YES")
                 categorical_column = tool_call.args["categorical_column"]
                 resultat_outil = categorical_count(df,categorical_column)
+
+
+            elif tool_call.name == "groupby_aggregation":
+                print("8 - Aggrégation (Group By)")
+                groupby_col = tool_call.args["groupby_col"]
+                agg_col = tool_call.args["agg_col"]
+                agg_func = tool_call.args["agg_func"]
+                resultat_outil = groupby_aggregation(df, groupby_col, agg_col, agg_func)
+
+            elif tool_call.name == "distribution_viz":
+                print("9 - Graphique de distribution")
+                num_col = tool_call.args["numerical_column"]
+                fig = distribution_viz(df, num_col)
+                st.pyplot(fig, width="content")
+                resultat_outil = {
+                    "status": "success", 
+                    "message": f"L'histogramme de {num_col} a été généré et affiché."
+                }
+
+            elif tool_call.name == "missing_values_report":
+                print("10 - Rapport des valeurs manquantes")
+                resultat_outil = missing_values_report(df)
+
+            elif tool_call.name == "time_series_viz":
+                print("11 - Graphique temporel")
+                date_col = tool_call.args["date_col"]
+                num_col = tool_call.args["numerical_col"]
+                fig = time_series_viz(df, date_col, num_col)
+                st.pyplot(fig, width="content")
+                resultat_outil = {
+                    "status": "success", 
+                    "message": f"Le graphique d'évolution de {num_col} dans le temps a été généré et affiché."
+                }
+
+            elif tool_call.name == "top_n_records":
+                print("12 - Extraction Top N")
+                sort_col = tool_call.args["sort_col"]
+                # On convertit en entier/booléen par sécurité au cas où l'API renvoie des floats ou chaînes
+                n = int(tool_call.args["n"]) 
+                ascending = bool(tool_call.args["ascending"])
+                resultat_outil = top_n_records(df, sort_col, n, ascending)
 
             # Formatage
             if isinstance(resultat_outil, (pd.DataFrame, pd.Series)):
